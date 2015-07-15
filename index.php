@@ -1,3 +1,4 @@
+<?php header('Access-Control-Allow-Origin: *'); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,7 +52,7 @@
         box-sizing: border-box;
     }
     .vertical-offset-100 {
-        padding-top: 100px;
+        padding-top: 30px;
     }
     .img-responsive {
         display: block;
@@ -78,31 +79,58 @@
                     </div>
                 </div>
                 <div class="panel-body">
-                    <form accept-charset="UTF-8" role="form" class="form-signin">
+                    <form accept-charset="UTF-8" role="form" class="form-signin" id="activateForm" name="activateForm">
                         <fieldset>
-                            <label class="panel-login">
-                                <div class="login_result">ถ้าเลข mac ตรงได้วันฟรี ระดับ gold 6 เดือน </div>
-                            </label>
-                            <input class="form-control" placeholder="เบอร์โทร" id="tel" type="text">
-                            <input class="form-control" placeholder="ยูสเซอเนม" id="username" type="text">
-                            <input class="form-control" placeholder="รหัสผ่าน" id="password" type="password">
-                            <input class="form-control" placeholder="อีเมล์" id="email" type="text">
-                            <input class="form-control" placeholder="เลข mac กล่อง" id="macAddress" type="text">
-                            <input class="form-control" placeholder="Password" id="password" type="password">
-                            <select class="form-control" id="province">
-                                <option>จังหวัด</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
+                            <div class="form-group">
+                                <label for="tel">เบอร์โทร :</label>
+                                <input class="form-control" placeholder="087-725-55533" id="tel" name="tel" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="username">ยูสเซอเนม :</label>
+                                <input class="form-control" placeholder="aommiez" id="username" name="username" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="password">รหัสผ่าน :</label>
+                                <input class="form-control" placeholder="123456" id="password" name="password" type="password">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">อีเมล์ :</label>
+                                <input class="form-control" placeholder="test@email.com" id="email" name="email" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="macAddress">เลข Mac Address กล่อง :</label>
+                                <input class="form-control" placeholder="9CH8AB04WCD1" id="macAddress" name="macAddress" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="addr">ที่อยู่ :</label>
+                                <textarea class="form-control" rows="3" id="addr" name="addr"></textarea>
+                            </div>
+                            <select class="form-control" id="province" name="province">
+                                <option selected>จังหวัด</option>
+                                <?php
+                                $url = "http://4kmoviestar.com/api/provinces";
+                                $json = file_get_contents($url);
+                                $json_data = json_decode($json, true);
+                                foreach ($json_data as $key => $value ) {
+                                    echo <<<HTML
+                                    <option value="{$value["PROVINCE_ID"]}">{$value["PROVINCE_NAME"]}</option>
+HTML;
+                                }
+                                ?>
                             </select>
                             <br>
-                            <select class="form-control" id="buyfrom">
-                                <option>ซื้อจาก</option>
-                                <option>2</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
+                            <select class="form-control" id="buyfrom" name="buyfrom">
+                                <option selected>ซื้อจาก</option>
+                                <?php
+                                $url = "http://4kmoviestar.com/api/buyfrom";
+                                $json = file_get_contents($url);
+                                $json_data = json_decode($json, true);
+                                foreach ($json_data as $key => $value ) {
+                                    echo <<<HTML
+                                    <option value="{$value["id"]}">{$value["shop_name"]}</option>
+HTML;
+                                }
+                                ?>
                             </select>
                             <br>
                             <input class="btn btn-lg btn-success btn-block" id="login" value="Activate">
@@ -118,7 +146,28 @@
 <script>
     $(document).ready(function() {
         $("#login").click(function(){
-
+            event.preventDefault();
+            $.ajax({
+                url: 'http://4kmoviestar.com/api/activate',
+                type: "POST",
+                crossDomain: true,
+                dataType: 'json',
+                data: $("#activateForm").serialize(),
+                success: function (result) {
+                    console.log(result);
+                    if (result['ss'] == 'success') {
+                        swal("Success!", "Activate สำเร็จ คุณสามารถเข้าสู่ระบบโดย username และ password ได้เลยครับ !", "success")
+                    } else if (result['ss'] == 'mac use') {
+                        swal({title: "Something went wrong!", text:"Mac Address ถูกใช้งานโดยผู้ใช้งานอื่นแล้ว", timer: 2000, type: "error"});
+                    } else if (result['ss'] == 'no mac') {
+                        swal({title: "Something went wrong!", text:"Mac Address นี้ไม่มีในระบบ", timer: 2000, type: "error"});
+                    }
+                },
+                error: function (result) {
+                    console.log(result);
+                    swal({title: "Something went wrong!", text: "Server Error !", timer: 2000, type: "error"});
+                }
+            });
         });
         $(document).mousemove(function(event) {
             TweenLite.to($("body"),
